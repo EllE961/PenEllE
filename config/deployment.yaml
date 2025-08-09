@@ -1,0 +1,49 @@
+# Base deployment configuration
+environment: local
+debug: true
+log_level: DEBUG
+
+# Database configuration
+database:
+  url: ${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/penelle}
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false
+
+# Redis configuration
+redis:
+  url: ${REDIS_URL:-redis://localhost:6379/0}
+  max_connections: 50
+  decode_responses: true
+  socket_timeout: 5
+
+# Storage configuration
+storage:
+  type: local
+  local_path: ./data/storage
+  prefix: penelle
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus_port: 9090
+  metrics_path: /metrics
+  jaeger_endpoint: ${JAEGER_ENDPOINT:-}
+
+# Feature flags
+enable_hot_reload: true
+enable_caching: true
+enable_tracing: true
+
+# Security
+api_key_header: X-API-Key
+cors_origins:
+  - "*"
+max_request_size: 10485760  # 10MB
+
+# Rate limiting
+rate_limit:
+  enabled: true
+  requests_per_minute: 60
+  burst_size: 10

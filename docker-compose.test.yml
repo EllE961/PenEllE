@@ -1,0 +1,173 @@
+version: '3.9'
+
+services:
+  postgres-test:
+    image: pgvector/pgvector:pg15
+    container_name: penelle-postgres-test
+    environment:
+      POSTGRES_USER: penelle
+      POSTGRES_PASSWORD: penelle_test
+      POSTGRES_DB: penelle_test
+      POSTGRES_INITDB_ARGS: "-c shared_preload_libraries=pg_stat_statements"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U penelle -d penelle_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - penelle-test-network
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: penelle-redis-test
+    command: redis-server --requirepass penelle_test_redis --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-test-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - penelle-test-network
+
+  minio-test:
+    image: minio/minio:latest
+    container_name: penelle-minio-test
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: penelle-test:public
+    ports:
+      - "9001:9000"
+      - "9002:9001"
+    volumes:
+      - minio-test-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - penelle-test-network
+
+  createbuckets:
+    image: minio/mc:latest
+    container_name: penelle-minio-createbuckets
+    depends_on:
+      minio-test:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio-test:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/penelle-test || true;
+      /usr/bin/mc anonymous set public myminio/penelle-test;
+      /usr/bin/mc mb myminio/penelle-test-private || true;
+      echo 'Buckets created successfully';
+      exit 0;
+      "
+    networks:
+      - penelle-test-network
+
+  # Optional: Test database with pgvector extension
+  postgres-vector-test:
+    image: ankane/pgvector:v0.5.1-pg15
+    container_name: penelle-postgres-vector-test
+    environment:
+      POSTGRES_USER: penelle
+      POSTGRES_PASSWORD: penelle_test
+      POSTGRES_DB: penelle_vector_test
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-vector-test-data:/var/lib/postgresql/data
+      - ./scripts/init-vector-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U penelle -d penelle_vector_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - penelle-test-network
+    profiles:
+      - vector
+
+  # Optional: Elasticsearch for future search functionality
+  elasticsearch-test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: penelle-elasticsearch-test
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=penelle-test
+    ports:
+      - "9201:9200"
+      - "9301:9300"
+    volumes:
+      - elasticsearch-test-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cat/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - penelle-test-network
+    profiles:
+      - search
+
+  # Test environment setup helper
+  test-setup:
+    image: alpine:latest
+    container_name: penelle-test-setup
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      minio-test:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts:ro
+    command: >
+      /bin/sh -c "
+      echo 'All test services are healthy and ready!';
+      echo 'PostgreSQL: postgres://penelle:penelle_test@localhost:5433/penelle_test';
+      echo 'Redis: redis://:penelle_test_redis@localhost:6380/0';
+      echo 'MinIO: http://localhost:9001 (minioadmin/minioadmin)';
+      echo 'MinIO Console: http://localhost:9002';
+      "
+    networks:
+      - penelle-test-network
+    profiles:
+      - setup
+
+volumes:
+  postgres-test-data:
+    driver: local
+  postgres-vector-test-data:
+    driver: local
+  redis-test-data:
+    driver: local
+  minio-test-data:
+    driver: local
+  elasticsearch-test-data:
+    driver: local
+
+networks:
+  penelle-test-network:
+    driver: bridge
+    name: penelle-test-network

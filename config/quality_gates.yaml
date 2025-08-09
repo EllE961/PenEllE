@@ -1,0 +1,31 @@
+quality_gates:
+  evidence:
+    min_sources: 10
+    max_sources: 50
+    min_evidence_per_claim: 2
+    min_source_quality_score: 0.7
+    require_peer_review: true
+    max_source_age_years: 5
+
+  readability:
+    max_passive_voice_percentage: 20
+    min_flesch_reading_ease: 30
+    max_sentence_length: 30
+    max_paragraph_length: 150
+
+  output:
+    min_word_count: 3000
+    max_word_count: 10000
+    required_sections:
+      - introduction
+      - methodology
+      - results
+      - discussion
+      - conclusion
+      - references
+    formats:
+      - markdown
+      - latex
+      - docx
+      - pdf
+      - html

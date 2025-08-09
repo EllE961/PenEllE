@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QualityReport",
+  "description": "Quality assessment report for generated content",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "default": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated pipeline run ID"
+    },
+    "overall_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Overall quality score"
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "Whether all quality gates passed"
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "readability": {
+          "type": "object",
+          "properties": {
+            "flesch_reading_ease": {"type": "number"},
+            "flesch_kincaid_grade": {"type": "number"},
+            "gunning_fog": {"type": "number"},
+            "smog_index": {"type": "number"},
+            "automated_readability_index": {"type": "number"}
+          }
+        },
+        "writing_quality": {
+          "type": "object",
+          "properties": {
+            "passive_voice_percentage": {"type": "number", "minimum": 0, "maximum": 100},
+            "sentence_complexity": {"type": "number"},
+            "average_sentence_length": {"type": "number"},
+            "vocabulary_diversity": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "evidence_quality": {
+          "type": "object",
+          "properties": {
+            "average_evidence_per_claim": {"type": "number"},
+            "unsupported_claims": {"type": "integer", "minimum": 0},
+            "evidence_diversity": {"type": "number", "minimum": 0, "maximum": 1},
+            "source_recency": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "factual_accuracy": {
+          "type": "object",
+          "properties": {
+            "verified_claims": {"type": "integer", "minimum": 0},
+            "disputed_claims": {"type": "integer", "minimum": 0},
+            "unverifiable_claims": {"type": "integer", "minimum": 0},
+            "accuracy_score": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "citation_quality": {
+          "type": "object",
+          "properties": {
+            "citation_density": {"type": "number"},
+            "citation_diversity": {"type": "number", "minimum": 0, "maximum": 1},
+            "self_citation_percentage": {"type": "number", "minimum": 0, "maximum": 100}
+          }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "info"]
+          },
+          "category": {
+            "type": "string",
+            "enum": ["readability", "evidence", "claims", "citations", "style", "structure"]
+          },
+          "message": {"type": "string"},
+          "location": {
+            "type": "object",
+            "properties": {
+              "section_id": {"type": "string", "format": "uuid"},
+              "paragraph": {"type": "integer", "minimum": 0},
+              "sentence": {"type": "integer", "minimum": 0}
+            }
+          },
+          "suggestion": {"type": "string"}
+        },
+        "required": ["severity", "category", "message"]
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Improvement recommendations"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["schema_version", "run_id", "overall_score", "passed", "metrics", "generated_at"],
+  "additionalProperties": false
+}

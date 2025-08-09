@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LimitedAccessEvidence",
+  "description": "Evidence with restricted access or copyright limitations",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "default": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the evidence"
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Source document ID"
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": ["statistic", "quote", "method", "casestudy", "table", "figure"]
+    },
+    "summary": {
+      "type": "string",
+      "description": "Summary or paraphrase of the evidence (copyright safe)"
+    },
+    "access_restrictions": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": ["copyright", "paywall", "embargo", "confidential", "gdpr"]
+        },
+        "access_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to access the full content"
+        },
+        "license": {
+          "type": "string",
+          "description": "License information"
+        },
+        "embargo_until": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when content becomes accessible"
+        }
+      },
+      "required": ["reason"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "page_number": {"type": "integer", "minimum": 1},
+        "section": {"type": "string"},
+        "confidence_score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["schema_version", "id", "source_id", "evidence_type", "summary", "access_restrictions"],
+  "additionalProperties": false
+}

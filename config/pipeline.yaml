@@ -1,0 +1,47 @@
+name: "PenEllE Pipeline"
+version: "1.0.0"
+
+# Default models for each stage
+default_models:
+  research: gpt-4
+  outline: gpt-4
+  draft: gpt-4
+  review: claude-3
+  format: gpt-3.5
+
+# Pipeline behavior
+max_concurrent_runs: 10
+default_timeout_minutes: 120
+retry_failed_stages: true
+max_stage_retries: 3
+
+# Caching configuration
+cache_ttl_hours: 24
+cache_research_results: true
+
+# Stage-specific configurations
+stages:
+  research:
+    timeout_minutes: 30
+    max_retries: 3
+    cache_results: true
+    
+  outline:
+    timeout_minutes: 15
+    max_retries: 2
+    require_approval: false
+    
+  draft:
+    timeout_minutes: 45
+    max_retries: 3
+    chunk_size: 2000
+    
+  review:
+    timeout_minutes: 30
+    max_retries: 2
+    review_passes: 2
+    
+  format:
+    timeout_minutes: 15
+    max_retries: 2
+    parallel_formats: true

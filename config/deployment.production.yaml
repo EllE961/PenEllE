@@ -1,0 +1,37 @@
+# Production environment overrides
+environment: production
+debug: false
+log_level: WARNING
+
+database:
+  url: ${DATABASE_URL}
+  pool_size: 20
+  max_overflow: 40
+  echo: false
+
+redis:
+  url: ${REDIS_URL}
+  max_connections: 100
+
+storage:
+  type: s3
+  bucket: ${S3_BUCKET}
+  prefix: penelle-prod
+
+monitoring:
+  enabled: true
+  prometheus_port: 9090
+  jaeger_endpoint: ${JAEGER_ENDPOINT}
+
+enable_hot_reload: false
+enable_caching: true
+enable_tracing: true
+
+cors_origins:
+  - https://penelle.ai
+  - https://app.penelle.ai
+
+rate_limit:
+  enabled: true
+  requests_per_minute: 100
+  burst_size: 20

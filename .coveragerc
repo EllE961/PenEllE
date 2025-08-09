@@ -1,0 +1,80 @@
+[run]
+source = src
+branch = True
+parallel = True
+concurrency = multiprocessing,thread
+omit = 
+    */migrations/*
+    */tests/*
+    */test_*.py
+    */__init__.py
+    */conftest.py
+    */setup.py
+    */venv/*
+    */.venv/*
+    */virtualenv/*
+    */site-packages/*
+data_file = .coverage
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = True
+skip_empty = True
+sort = Cover
+fail_under = 60
+
+exclude_lines =
+    # Standard exclusions
+    pragma: no cover
+    def __repr__
+    def __str__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    
+    # Type checking
+    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
+    @typing.overload
+    @overload
+    
+    # Abstract methods
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+    
+    # Defensive programming
+    except ImportError:
+    except ModuleNotFoundError:
+    
+    # Platform specific
+    if sys.platform
+    
+    # Debug only
+    if self\.debug:
+    if settings\.DEBUG:
+    
+    # Testing
+    def test_
+    class Test
+
+ignore_errors = True
+
+[html]
+directory = htmlcov
+title = PenEllE Coverage Report
+show_contexts = True
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+pretty_print = True
+show_contexts = True
+
+[paths]
+source =
+    src/
+    */site-packages/src/
+    */src/

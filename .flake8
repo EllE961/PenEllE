@@ -1,0 +1,35 @@
+[flake8]
+max-line-length = 100
+max-complexity = 10
+exclude = 
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .eggs,
+    *.egg,
+    venv,
+    .venv,
+    migrations,
+    .tox,
+    .pytest_cache,
+    .mypy_cache,
+    .ruff_cache,
+    htmlcov,
+    .coverage,
+    *.pyc,
+    *.pyo,
+    .env*,
+    .instance*
+ignore = 
+    E203,
+    E501,
+    W503,
+    W504,
+    B008,
+    C901
+per-file-ignores =
+    __init__.py: F401
+    tests/*: S101,S105,S106
+count = True
+statistics = True

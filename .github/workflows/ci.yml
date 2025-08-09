@@ -1,0 +1,346 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.7.1"
+  PYTEST_WORKERS: "auto"
+  COVERAGE_THRESHOLD: 60  # Target coverage threshold
+
+jobs:
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit[toml] safety pip-audit
+    
+    - name: Run Bandit
+      run: bandit -r src/ -f json -o bandit-report.json || true
+    
+    - name: Upload Bandit Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: bandit-report
+        path: bandit-report.json
+    
+    - name: Run Safety Check
+      run: safety check --json > safety-report.json || true
+    
+    - name: Upload Safety Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: safety-report
+        path: safety-report.json
+    
+    - name: Run pip-audit
+      run: pip-audit --desc --format json --output pip-audit-report.json || true
+    
+    - name: Upload pip-audit Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: pip-audit-report
+        path: pip-audit-report.json
+
+  test:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: penelle
+          POSTGRES_PASSWORD: penelle_test
+          POSTGRES_DB: penelle_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_DEFAULT_BUCKETS: penelle-test
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-test-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-xdist pytest-timeout pytest-benchmark
+        pip install sentence-transformers rank-bm25 pgvector
+    
+    - name: Set up test environment
+      run: |
+        cp .env.example .env.test
+        echo "DATABASE_URL=postgresql://penelle:penelle_test@localhost:5432/penelle_test" >> .env.test
+        echo "REDIS_URL=redis://localhost:6379/0" >> .env.test
+        echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env.test
+        echo "S3_ACCESS_KEY=minioadmin" >> .env.test
+        echo "S3_SECRET_KEY=minioadmin" >> .env.test
+        echo "S3_BUCKET_NAME=penelle-test" >> .env.test
+    
+    - name: Run database migrations
+      env:
+        DATABASE_URL: postgresql://penelle:penelle_test@localhost:5432/penelle_test
+      run: |
+        alembic upgrade head
+    
+    - name: Create MinIO test bucket
+      run: |
+        pip install minio
+        python -c "
+        from minio import Minio
+        client = Minio('localhost:9000', access_key='minioadmin', secret_key='minioadmin', secure=False)
+        if not client.bucket_exists('penelle-test'):
+            client.make_bucket('penelle-test')
+        "
+    
+    - name: Run tests with coverage
+      env:
+        ENV_FILE: .env.test
+      run: |
+        pytest tests/ \
+          -n ${{ env.PYTEST_WORKERS }} \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
+          --junit-xml=test-results-${{ matrix.python-version }}.xml \
+          --benchmark-json=benchmark-results-${{ matrix.python-version }}.json \
+          -v
+    
+    - name: Check coverage threshold
+      run: |
+        coverage report --fail-under=${{ env.COVERAGE_THRESHOLD }}
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-${{ matrix.python-version }}
+        fail_ci_if_error: false
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          test-results-*.xml
+          htmlcov/
+          benchmark-results-*.json
+    
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: htmlcov/
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [security]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Start services with docker-compose
+      run: |
+        docker compose -f docker-compose.test.yml up -d
+        sleep 30  # Wait for services to be ready
+    
+    - name: Run integration tests
+      run: |
+        # Run tests marked as integration if they exist
+        pytest -m integration \
+          --cov=src \
+          --cov-append \
+          --cov-report=xml \
+          -v || echo "No integration tests found"
+    
+    - name: Stop services
+      if: always()
+      run: docker compose -f docker-compose.test.yml down
+
+  generate-reports:
+    name: Generate CI Reports
+    runs-on: ubuntu-latest
+    needs: [test, integration-test]
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        pip install matplotlib pandas jinja2 pytest-json-report
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+    
+    - name: Generate visual report
+      run: |
+        python scripts/generate_ci_report.py \
+          --artifacts-dir artifacts/ \
+          --output-dir ci-reports/
+    
+    - name: Upload CI reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-reports
+        path: ci-reports/
+    
+    - name: Comment PR with results
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+          const reportPath = 'ci-reports/summary.md';
+          if (fs.existsSync(reportPath)) {
+            const report = fs.readFileSync(reportPath, 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+          }
+
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    needs: [test, integration-test, security]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Build package
+      run: |
+        pip install build
+        python -m build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [test, integration-test, security]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        load: true
+        tags: penelle:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: penelle:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      continue-on-error: true
+      with:
+        sarif_file: 'trivy-results.sarif'

@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StructuredInput",
+  "description": "Structured input for pipeline run with advanced options",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "default": "1.0"
+    },
+    "thesis": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 5000,
+      "description": "Main thesis or research question"
+    },
+    "context": {
+      "type": "string",
+      "description": "Additional context or background information"
+    },
+    "objectives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific objectives to address"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key terms and concepts"
+    },
+    "outline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "section": {"type": "string"},
+          "description": {"type": "string"},
+          "target_word_count": {"type": "integer", "minimum": 0}
+        },
+        "required": ["section"]
+      },
+      "description": "Suggested document outline"
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "required_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "DOI or identifier of required source"
+          }
+        },
+        "excluded_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "DOI or identifier of excluded source"
+          }
+        },
+        "methodology_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "user_library": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean", "default": true},
+        "collection_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "Specific collections to use"
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "citation_style": {
+          "type": "string",
+          "enum": ["apa", "mla", "chicago", "harvard", "ieee", "vancouver"],
+          "default": "apa"
+        },
+        "language_variant": {
+          "type": "string",
+          "enum": ["en-US", "en-GB", "en-AU", "en-CA"],
+          "default": "en-US"
+        },
+        "formality_level": {
+          "type": "string",
+          "enum": ["formal", "semi-formal", "informal"],
+          "default": "formal"
+        }
+      }
+    }
+  },
+  "required": ["schema_version", "thesis"],
+  "additionalProperties": false
+}

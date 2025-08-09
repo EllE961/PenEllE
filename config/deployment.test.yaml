@@ -1,0 +1,17 @@
+# Test environment overrides
+environment: test
+debug: false
+log_level: INFO
+
+database:
+  url: ${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/penelle_test}
+  echo: true
+
+storage:
+  type: local
+  local_path: ./test_data/storage
+
+monitoring:
+  enabled: false
+
+enable_hot_reload: false

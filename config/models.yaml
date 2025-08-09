@@ -1,0 +1,83 @@
+models:
+  gpt-4:
+    provider: openai
+    model_name: gpt-4-turbo-preview
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    api_key: ${OPENAI_API_KEY}
+    timeout: 300
+    max_retries: 3
+
+  gpt-3.5:
+    provider: openai
+    model_name: gpt-3.5-turbo-16k
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    api_key: ${OPENAI_API_KEY}
+    timeout: 180
+    max_retries: 3
+
+  claude-3:
+    provider: anthropic
+    model_name: claude-3-opus-20240229
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    api_key: ${ANTHROPIC_API_KEY}
+    timeout: 300
+    max_retries: 3
+
+  claude-3-sonnet:
+    provider: anthropic
+    model_name: claude-3-sonnet-20240229
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    api_key: ${ANTHROPIC_API_KEY}
+    timeout: 180
+    max_retries: 3
+
+  ollama-mixtral:
+    provider: ollama
+    model_name: mixtral:8x7b
+    max_tokens: 8192
+    temperature: 0.7
+    top_p: 0.9
+    api_base: http://localhost:11434
+    timeout: 600
+    max_retries: 2
+
+  ollama-llama2:
+    provider: ollama
+    model_name: llama2:70b
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    api_base: http://localhost:11434
+    timeout: 600
+    max_retries: 2
+
+  azure-gpt-4:
+    provider: azure
+    model_name: gpt-4
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    api_key: ${AZURE_OPENAI_API_KEY}
+    api_base: ${AZURE_OPENAI_ENDPOINT}
+    timeout: 300
+    max_retries: 3
+
+  vertex-palm:
+    provider: vertexai
+    model_name: text-bison@001
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    api_key: ${GOOGLE_APPLICATION_CREDENTIALS}
+    timeout: 300
+    max_retries: 3

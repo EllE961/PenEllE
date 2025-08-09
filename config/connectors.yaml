@@ -1,0 +1,58 @@
+connectors:
+  openalex:
+    enabled: true
+    priority: 1
+    rate_limit: 10
+    max_results: 100
+    timeout: 30
+    api_base: https://api.openalex.org
+    extra_params:
+      polite_email: ${OPENALEX_EMAIL:-}
+      filter_open_access: true
+
+  semantic_scholar:
+    enabled: true
+    priority: 2
+    rate_limit: 10
+    max_results: 100
+    timeout: 30
+    api_key: ${SEMANTIC_SCHOLAR_API_KEY:-}
+    api_base: https://api.semanticscholar.org/graph/v1
+    extra_params:
+      fields: "paperId,title,abstract,authors,year,venue,citationCount,openAccessPdf"
+
+  pubmed:
+    enabled: true
+    priority: 3
+    rate_limit: 3
+    max_results: 100
+    timeout: 45
+    email: ${PUBMED_EMAIL}
+    api_base: https://eutils.ncbi.nlm.nih.gov/entrez/eutils
+    extra_params:
+      db: pubmed
+      retmode: xml
+      retmax: 100
+
+  arxiv:
+    enabled: true
+    priority: 4
+    rate_limit: 5
+    max_results: 50
+    timeout: 30
+    api_base: http://export.arxiv.org/api/query
+    extra_params:
+      sort_by: relevance
+      sort_order: descending
+
+  crossref:
+    enabled: true
+    priority: 5
+    rate_limit: 10
+    max_results: 100
+    timeout: 30
+    email: ${CROSSREF_EMAIL:-}
+    api_base: https://api.crossref.org
+    extra_params:
+      mailto: ${CROSSREF_EMAIL:-}
+      filter: "has-abstract:true"

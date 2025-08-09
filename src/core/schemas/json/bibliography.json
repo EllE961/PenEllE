@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Bibliography",
+  "description": "Bibliography for the generated document",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "default": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated pipeline run ID"
+    },
+    "citation_style": {
+      "type": "string",
+      "enum": ["apa", "mla", "chicago", "harvard", "ieee", "vancouver"],
+      "description": "Citation style used"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Citation key/identifier"
+          },
+          "source_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the source in the database"
+          },
+          "formatted_citation": {
+            "type": "string",
+            "description": "Formatted citation text"
+          },
+          "in_text_citation": {
+            "type": "string",
+            "description": "In-text citation format"
+          },
+          "usage_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of times cited in the document"
+          },
+          "sections_used": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sections where this source is cited"
+          },
+          "csl_json": {
+            "type": "object",
+            "description": "CSL-JSON data for the source"
+          }
+        },
+        "required": ["id", "source_id", "formatted_citation", "in_text_citation"]
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "total_sources": {"type": "integer", "minimum": 0},
+        "unique_authors": {"type": "integer", "minimum": 0},
+        "publication_year_range": {
+          "type": "object",
+          "properties": {
+            "earliest": {"type": "integer"},
+            "latest": {"type": "integer"}
+          }
+        },
+        "source_types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Count of sources by type"
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["schema_version", "run_id", "citation_style", "entries", "generated_at"],
+  "additionalProperties": false
+}

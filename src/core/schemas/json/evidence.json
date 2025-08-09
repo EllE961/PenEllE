@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence",
+  "description": "Extracted evidence from sources",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "default": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the evidence"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated pipeline run ID"
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Source document ID"
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": ["statistic", "quote", "method", "casestudy", "table", "figure"],
+      "description": "Type of evidence"
+    },
+    "content": {
+      "type": "string",
+      "description": "The actual evidence text"
+    },
+    "context": {
+      "type": "string",
+      "description": "Surrounding context of the evidence"
+    },
+    "page_number": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Page number where evidence was found"
+    },
+    "section": {
+      "type": "string",
+      "description": "Section of the document"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Extraction confidence score"
+    },
+    "relevance_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Relevance to the thesis"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata specific to evidence type"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["schema_version", "id", "run_id", "source_id", "evidence_type", "content"],
+  "additionalProperties": false
+}

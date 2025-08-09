@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DraftSection",
+  "description": "A section of the generated draft",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "default": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the section"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated pipeline run ID"
+    },
+    "section_type": {
+      "type": "string",
+      "enum": ["introduction", "methodology", "results", "discussion", "conclusion", "abstract", "custom"],
+      "description": "Type of section"
+    },
+    "title": {
+      "type": "string",
+      "description": "Section title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Section content in markdown format"
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Section order in the document"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "IDs of evidence used in this section"
+    },
+    "claim_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "IDs of claims made in this section"
+    },
+    "word_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Word count of the section"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "generated_by": {
+          "type": "string",
+          "description": "Model or service that generated this section"
+        },
+        "generation_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["schema_version", "id", "run_id", "section_type", "title", "content", "order"],
+  "additionalProperties": false
+}
