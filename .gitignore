@@ -209,3 +209,7 @@ docs/api/
 # Output files
 output/
 exports/
+
+# Test reports used by scripts/make_figures.py
+coverage.json
+junit.xml

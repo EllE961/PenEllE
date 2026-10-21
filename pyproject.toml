@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "penelle"
 version = "0.1.0"
-description = "AI-powered research writing pipeline"
+description = "Research writing pipeline: thesis to plan, sources, evidence and draft (experimental)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dynamic = ["dependencies", "optional-dependencies"]
 authors = [
-    {name = "PenEllE Team", email = "team@penelle.ai"},
+    {name = "Yahya Al Salmi"},
 ]
 keywords = ["ai", "research", "writing", "nlp", "automation"]
 classifiers = [
@@ -25,10 +25,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/penelle/penelle"
-Documentation = "https://penelle.readthedocs.io"
-Repository = "https://github.com/penelle/penelle"
-Issues = "https://github.com/penelle/penelle/issues"
+Repository = "https://github.com/EllE961/PenEllE"
 
 [tool.setuptools.packages.find]
 where = ["."]
